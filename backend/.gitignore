@@ -1,0 +1,13 @@
+# builds
+build/
+
+# logs
+logs/
+
+# configs
+config/*.yml
+!*.example.yml
+
+# environments
+.env
+!.example.env

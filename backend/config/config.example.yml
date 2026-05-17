@@ -1,0 +1,21 @@
+database:
+  host: "localhost"
+  port: "5438"
+  user: "adm"
+  password: "123"
+  name: "postgres"
+
+  max_pool_size: 1
+  conn_attempts: 10
+  timeout: 5s
+
+http_server:
+  jwt-secret: "a-string-secret-at-least-256-bits-long"
+  timeout: 5s
+  port: "8090"
+
+redis:
+  host: "redis"
+  password: ""
+  port: "6379"
+  db: 0

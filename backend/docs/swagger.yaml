@@ -1,0 +1,401 @@
+definitions:
+  entity.Event:
+    description: Описание события
+    properties:
+      date:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      image:
+        type: string
+      price:
+        type: integer
+      title:
+        type: string
+    type: object
+  entity.User:
+    description: Описание пользователя
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+  handlers.addCartItemRequest:
+    properties:
+      eventId:
+        type: integer
+    type: object
+  handlers.addCartItemResponse:
+    properties:
+      item_id:
+        type: integer
+      success:
+        type: boolean
+    type: object
+  handlers.deleteCartItemResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  handlers.getEventsResponse:
+    properties:
+      events:
+        items:
+          $ref: '#/definitions/entity.Event'
+        type: array
+    type: object
+  handlers.loginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  handlers.loginResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/entity.User'
+    type: object
+  handlers.payRequest:
+    properties:
+      eventIds:
+        items:
+          type: integer
+        type: array
+    type: object
+  handlers.payResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  handlers.registerResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/entity.User'
+    type: object
+info:
+  contact: {}
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Аутентифицирует пользователя и возвращает JWT-токен
+      parameters:
+      - description: Учетные данные пользователя
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешная аутентификация
+          schema:
+            $ref: '#/definitions/handlers.loginResponse'
+        "400":
+          description: Некорректные данные запроса
+          schema:
+            type: string
+        "404":
+          description: Пользователь не найден
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      summary: Вход в систему
+      tags:
+      - auth
+  /auth/me:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает информацию о текущем аутентифицированном пользователе
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешный ответ с данными пользователя
+          schema:
+            $ref: '#/definitions/entity.User'
+        "401":
+          description: Неавторизованный доступ
+          schema:
+            type: string
+        "404":
+          description: Пользователь не найден
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Получить данные текущего пользователя
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Обновляет информацию о текущем аутентифицированном пользователе
+      parameters:
+      - description: Данные пользователя для обновления
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/entity.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное обновление пользователя
+          schema:
+            $ref: '#/definitions/entity.User'
+        "400":
+          description: Некорректные данные запроса
+          schema:
+            type: string
+        "401":
+          description: Неавторизованный доступ
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Обновить данные пользователя
+      tags:
+      - users
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Регистрирует нового пользователя и возвращает JWT-токен
+      parameters:
+      - description: Данные нового пользователя
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/entity.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешная регистрация
+          schema:
+            $ref: '#/definitions/handlers.registerResponse'
+        "400":
+          description: Некорректные данные запроса
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      summary: Регистрация нового пользователя
+      tags:
+      - auth
+  /cart:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает все элементы корзины текущего аутентифицированного пользователя
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешный ответ со списком элементов корзины
+          schema:
+            items:
+              $ref: '#/definitions/entity.Event'
+            type: array
+        "401":
+          description: Неавторизованный доступ
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Получить элементы корзины
+      tags:
+      - cart
+    post:
+      consumes:
+      - application/json
+      description: Добавляет мероприятие в корзину текущего пользователя
+      parameters:
+      - description: Данные для добавления в корзину
+        in: body
+        name: cartItem
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.addCartItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное добавление элемента
+          schema:
+            $ref: '#/definitions/handlers.addCartItemResponse'
+        "400":
+          description: Некорректные данные запроса
+          schema:
+            type: string
+        "401":
+          description: Неавторизованный доступ
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Добавить элемент в корзину
+      tags:
+      - cart
+  /cart/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет мероприятие из корзины текущего пользователя по ID
+      parameters:
+      - description: ID элемента корзины
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное удаление элемента
+          schema:
+            $ref: '#/definitions/handlers.deleteCartItemResponse'
+        "400":
+          description: Некорректный ID
+          schema:
+            type: string
+        "401":
+          description: Неавторизованный доступ
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Удалить элемент из корзины
+      tags:
+      - cart
+  /events:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список всех доступных мероприятий
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешный ответ со списком мероприятий
+          schema:
+            $ref: '#/definitions/handlers.getEventsResponse'
+        "404":
+          description: Мероприятия не найдены
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      summary: Получить список мероприятий
+      tags:
+      - events
+  /payment:
+    post:
+      consumes:
+      - application/json
+      description: Обрабатывает оплату выбранных мероприятий для текущего пользователя
+      parameters:
+      - description: Данные для оплаты
+        in: body
+        name: payment
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.payRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешная обработка оплаты
+          schema:
+            $ref: '#/definitions/handlers.payResponse'
+        "400":
+          description: Некорректные данные запроса
+          schema:
+            type: string
+        "401":
+          description: Неавторизованный доступ
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Обработать оплату
+      tags:
+      - payment
+  /tickets:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список всех билетов текущего аутентифицированного пользователя
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешный ответ со списком билетов
+          schema:
+            items:
+              $ref: '#/definitions/entity.Event'
+            type: array
+        "401":
+          description: Неавторизованный доступ
+          schema:
+            type: string
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Получить билеты пользователя
+      tags:
+      - tickets
+swagger: "2.0"
